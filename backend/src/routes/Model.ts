@@ -91,10 +91,10 @@ router.post('/', adminMiddleware, async (req, res) => {
   }
 });
 
-// PUT update model by slug
-router.put('/:slug', adminMiddleware, async (req, res) => {
-  const { slug } = req.params;
+// PUT update model by modelslug in body
+router.put('/', adminMiddleware, async (req, res) => {
   const {
+    modelslug,
     name,
     contextLength,
     cost_inputMil,
@@ -104,9 +104,14 @@ router.put('/:slug', adminMiddleware, async (req, res) => {
     description,
   } = req.body || {};
 
+  if (!modelslug) {
+    res.status(400).json({ error: 'Missing field: modelslug' });
+    return;
+  }
+
   try {
     const updatedModel = await prisma.model.update({
-      where: { slug },
+      where: { slug: modelslug },
       data: {
         name,
         contextLength,

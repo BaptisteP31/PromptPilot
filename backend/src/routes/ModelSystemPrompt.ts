@@ -123,7 +123,7 @@ router.post('/', authMiddleware, async (req, res) => {
 // PUT update ModelSystemPrompt by id
 router.put('/:id', authMiddleware, async (req, res) => {
   const id = Number(req.params.id);
-  const { name, description } = req.body || {};
+  const { name, description, modelslug } = req.body || {};
   const userId = (req as any).user?.id;
 
   try {
@@ -139,6 +139,7 @@ router.put('/:id', authMiddleware, async (req, res) => {
       data: {
         name,
         description,
+        modelslug,
       },
     });
     res.json(updatedPrompt);
