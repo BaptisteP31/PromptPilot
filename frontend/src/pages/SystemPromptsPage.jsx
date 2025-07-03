@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import SystemPromptForm from './SystemPromptForm';
 
-function SystemPromptCard({ prompt, onEdit }) {
+function SystemPromptCard({ prompt, onEdit, onDelete }) {
   return (
     <div className="card mb-3 shadow-sm" style={{ border: '1px solid #dee2e6' }}>
       <div className="card-body d-flex justify-content-between align-items-center">
@@ -15,9 +15,14 @@ function SystemPromptCard({ prompt, onEdit }) {
             <span>Créé le : {new Date(prompt.createdAt).toLocaleString('fr-FR')}</span>
           </div>
         </div>
-        <button className="btn btn-sm btn-outline-primary" onClick={() => onEdit(prompt)}>
-          Modifier
-        </button>
+        <div>
+          <button className="btn btn-sm btn-outline-primary me-2" onClick={() => onEdit(prompt)}>
+            Modifier
+          </button>
+          <button className="btn btn-sm btn-outline-danger" onClick={() => onDelete(prompt)}>
+            Supprimer
+          </button>
+        </div>
       </div>
     </div>
   );
@@ -30,6 +35,8 @@ function SystemPromptsPage() {
   const [showForm, setShowForm] = useState(false);
   const [editPrompt, setEditPrompt] = useState(null);
   const [search, setSearch] = useState('');
+  const [deletePrompt, setDeletePrompt] = useState(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
 
   const fetchPrompts = async () => {
     setLoading(true);
@@ -82,6 +89,31 @@ function SystemPromptsPage() {
     setEditPrompt(null);
   };
 
+  const handleDelete = (prompt) => {
+    setDeletePrompt(prompt);
+  };
+
+  const confirmDelete = async () => {
+    if (!deletePrompt) return;
+    setDeleteLoading(true);
+    const token = localStorage.getItem('token');
+    try {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/system-prompt/${deletePrompt.id}`, {
+        method: 'DELETE',
+        headers: {
+          Authorization: token ? `Bearer ${token}` : undefined,
+        },
+      });
+      if (!res.ok) throw new Error('Erreur lors de la suppression.');
+      setDeletePrompt(null);
+      fetchPrompts();
+    } catch (err) {
+      alert(err.message);
+    } finally {
+      setDeleteLoading(false);
+    }
+  };
+
   if (loading) return <div className="container py-5 text-center">Chargement...</div>;
   if (error) return <div className="container py-5 text-danger text-center">{error}</div>;
 
@@ -113,10 +145,34 @@ return (
             <div className="col-md-10">
                 {filteredPrompts.length === 0 && <div className="text-center">Aucun prompt système disponible.</div>}
                 {filteredPrompts.map(prompt => (
-                    <SystemPromptCard key={prompt.id} prompt={prompt} onEdit={handleEdit} />
+                    <SystemPromptCard key={prompt.id} prompt={prompt} onEdit={handleEdit} onDelete={handleDelete} />
                 ))}
             </div>
         </div>
+
+        {/* Modal de confirmation suppression */}
+        {deletePrompt && (
+          <div className="modal show d-block" tabIndex="-1" style={{ background: 'rgba(0,0,0,0.5)' }}>
+            <div className="modal-dialog modal-dialog-centered">
+              <div className="modal-content bg-dark text-light">
+                <div className="modal-header border-0">
+                  <h5 className="modal-title">Confirmer la suppression</h5>
+                  <button type="button" className="btn-close btn-close-white" onClick={() => setDeletePrompt(null)}></button>
+                </div>
+                <div className="modal-body">
+                  <p>Voulez-vous vraiment supprimer ce prompt système ?</p>
+                  <div className="small text-muted">{deletePrompt.name}</div>
+                </div>
+                <div className="modal-footer border-0">
+                  <button className="btn btn-secondary" onClick={() => setDeletePrompt(null)} disabled={deleteLoading}>Annuler</button>
+                  <button className="btn btn-danger" onClick={confirmDelete} disabled={deleteLoading}>
+                    {deleteLoading ? 'Suppression...' : 'Supprimer'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
     </div>
 );
 }

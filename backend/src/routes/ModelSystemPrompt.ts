@@ -25,12 +25,32 @@ router.get('/', authMiddleware, async (req, res) => {
         systemPrompt: { select: { content: true } },
       },
     });
-    // Ajout du champ systemPromptContent à plat
-    const promptsWithContent = prompts.map(p => ({
+
+    // Get all needed models in one query, excluding description
+    const uniqueModelslugs = Array.from(new Set(prompts.map(p => p.modelslug)));
+    const models = await prisma.model.findMany({
+      where: { slug: { in: uniqueModelslugs } },
+      select: {
+        slug: true,
+        name: true,
+        contextLength: true,
+        cost_inputMil: true,
+        cost_outputMil: true,
+        cost_inputImg: true,
+        cost_outputImg: true,
+        // description intentionally omitted
+        // add other fields if needed
+      }
+    });
+    const modelMap = Object.fromEntries(models.map(m => [m.slug, m]));
+
+    // Add model entity (without description)
+    const promptsWithModel = prompts.map(p => ({
       ...p,
-      systemPromptContent: p.systemPrompt?.content || '',
+      model: modelMap[p.modelslug] || null,
     }));
-    res.json(promptsWithContent);
+
+    res.json(promptsWithModel);
   } catch (error) {
     console.error('Fetch ModelSystemPrompts error:', error);
     res.status(500).json({ error: 'Internal server error' });
@@ -45,9 +65,18 @@ router.get('/:id', authMiddleware, async (req, res) => {
     const prompt = await prisma.modelSystemPrompt.findUnique({ where: { id } });
     if (!prompt || prompt.userId !== userId) {
       res.status(404).json({ error: 'ModelSystemPrompt not found' });
-    } else {
-      res.json(prompt);
+      return;
     }
+
+    // Retrieve the model entity using the modelslug
+    const model = await prisma.model.findUnique({
+      where: { slug: prompt.modelslug }
+    });
+
+    res.json({
+      ...prompt,
+      model
+    });
   } catch (error) {
     console.error('Fetch ModelSystemPrompt by id error:', error);
     res.status(500).json({ error: 'Internal server error' });

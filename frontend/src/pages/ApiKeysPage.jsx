@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useRef, useState, useEffect } from 'react';
 
-function ApiKeyCard({ apiKey, onEdit }) {
+function ApiKeyCard({ apiKey, onEdit, onDelete }) {
   return (
     <div className="card mb-3 shadow-sm" style={{ border: '1px solid #dee2e6' }}>
       <div className="card-body d-flex justify-content-between align-items-center">
@@ -16,8 +16,11 @@ function ApiKeyCard({ apiKey, onEdit }) {
           <div className="mb-2">
             <span className="badge bg-secondary">{apiKey.apiKey}</span>
           </div>
-          <button className="btn btn-sm btn-outline-primary" onClick={() => onEdit(apiKey)}>
+          <button className="btn btn-sm btn-outline-primary me-2" onClick={() => onEdit(apiKey)}>
             Modifier
+          </button>
+          <button className="btn btn-sm btn-danger" onClick={() => onDelete(apiKey)}>
+            Supprimer
           </button>
         </div>
       </div>
@@ -140,6 +143,8 @@ function ApiKeysPage() {
   const [showForm, setShowForm] = useState(false);
   const [editKey, setEditKey] = useState(null);
   const [search, setSearch] = useState('');
+  const [deleteKey, setDeleteKey] = useState(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
 
   useEffect(() => {
     fetchApiKeys();
@@ -179,6 +184,31 @@ function ApiKeysPage() {
   const handleEdit = (key) => {
     setEditKey(key);
     setShowForm(true);
+  };
+
+  const handleDelete = (key) => {
+    setDeleteKey(key);
+  };
+
+  const confirmDelete = async () => {
+    if (!deleteKey) return;
+    setDeleteLoading(true);
+    const token = localStorage.getItem('token');
+    try {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api-key/${deleteKey.id}`, {
+        method: 'DELETE',
+        headers: {
+          Authorization: token ? `Bearer ${token}` : undefined,
+        },
+      });
+      if (!res.ok) throw new Error('Erreur lors de la suppression.');
+      setDeleteKey(null);
+      fetchApiKeys();
+    } catch (err) {
+      alert(err.message);
+    } finally {
+      setDeleteLoading(false);
+    }
   };
 
   const handleFormSuccess = () => {
@@ -229,10 +259,33 @@ function ApiKeysPage() {
         <div className="col-md-10">
           {filteredApiKeys.length === 0 && <div className="text-center">Aucune clef d'API trouvée.</div>}
           {filteredApiKeys.map(apiKey => (
-            <ApiKeyCard key={apiKey.id} apiKey={apiKey} onEdit={handleEdit} />
+            <ApiKeyCard key={apiKey.id} apiKey={apiKey} onEdit={handleEdit} onDelete={handleDelete} />
           ))}
         </div>
       </div>
+      {/* Modal de confirmation suppression */}
+      {deleteKey && (
+        <div className="modal show d-block" tabIndex="-1" style={{ background: 'rgba(0,0,0,0.5)' }}>
+          <div className="modal-dialog modal-dialog-centered">
+            <div className="modal-content bg-dark text-light">
+              <div className="modal-header border-0">
+                <h5 className="modal-title">Confirmer la suppression</h5>
+                <button type="button" className="btn-close btn-close-white" onClick={() => setDeleteKey(null)}></button>
+              </div>
+              <div className="modal-body">
+                <p>Voulez-vous vraiment supprimer cette clef d'API ?</p>
+                <div className="small text-muted">{deleteKey.apiKey}</div>
+              </div>
+              <div className="modal-footer border-0">
+                <button className="btn btn-secondary" onClick={() => setDeleteKey(null)} disabled={deleteLoading}>Annuler</button>
+                <button className="btn btn-danger" onClick={confirmDelete} disabled={deleteLoading}>
+                  {deleteLoading ? 'Suppression...' : 'Supprimer'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
