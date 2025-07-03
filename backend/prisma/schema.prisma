@@ -1,0 +1,91 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           Int       @id @default(autoincrement())
+  email        String    @unique
+  passwordHash String
+  displayName  String
+  role         String    @default("user")
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  lastLogin    DateTime?
+
+  modelSystemPrompts ModelSystemPrompt[]
+  systemPrompts      SystemPrompt[]
+  apiKeys           APIKey[]
+}
+
+model APIKeyType {
+  id          Int      @id @default(autoincrement())
+  name        String   @unique
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  apiKeys APIKey[]
+}
+
+model APIKey {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  typeId    Int
+  apiKey    String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User       @relation(fields: [userId], references: [id])
+  type APIKeyType @relation(fields: [typeId], references: [id])
+}
+
+model Model {
+  slug           String   @id
+  name           String
+  contextLength  Int
+  cost_inputMil  Float
+  cost_outputMil Float
+  cost_inputImg  Float?
+  cost_outputImg Float?
+  description    String?   @db.Text
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  modelSystemPrompts ModelSystemPrompt[]
+}
+
+model SystemPrompt {
+  id          Int      @id @default(autoincrement())
+  userId         Int
+  name        String
+  description String?
+  content     String @db.Text
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  modelSystemPrompts ModelSystemPrompt[]
+  user         User         @relation(fields: [userId], references: [id])
+}
+
+model ModelSystemPrompt {
+  id             Int     @id @default(autoincrement())
+  modelslug      String
+  systemPromptId Int
+  name           String
+  description    String?
+  userId         Int
+
+  model        Model        @relation(fields: [modelslug], references: [slug])
+  systemPrompt SystemPrompt @relation(fields: [systemPromptId], references: [id])
+  user         User         @relation(fields: [userId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([modelslug, systemPromptId, userId])
+}

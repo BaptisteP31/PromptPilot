@@ -1,0 +1,72 @@
+/* Enable Bootstrap dark theme overrides */
+body {
+  background-color: #212529;
+  color: #f8f9fa;
+}
+
+.card, .btn, .form-control, .navbar, .dropdown-menu {
+  background-color: #343a40 !important;
+  color: #f8f9fa !important;
+  border-color: #454d55 !important;
+}
+
+.btn-primary {
+  background-color: #0d6efd !important;
+  border-color: #0d6efd !important;
+}
+
+.btn-outline-secondary {
+  color: #f8f9fa !important;
+  border-color: #6c757d !important;
+}
+
+.btn-link {
+  color: #66bfff !important;
+}
+
+a {
+  color: #66bfff;
+}
+
+a:hover {
+  color: #3399ff;
+}
+
+/* Optional: adjust input, select, textarea for dark */
+input, select, textarea {
+  background-color: #212529 !important;
+  color: #f8f9fa !important;
+  border-color: #454d55 !important;
+}
+
+input::placeholder, textarea::placeholder, .form-control::placeholder {
+  color: #bfc8d0 !important;
+  opacity: 1 !important;
+}
+
+.text-muted {
+  color: #adb5bd !important;
+}
+
+/* Autocomplete dropdown for dark theme */
+.model-autocomplete-dropdown {
+  background-color: #343a40 !important;
+  color: #f8f9fa !important;
+  border: 1px solid #454d55 !important;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+  z-index: 1050;
+}
+.model-autocomplete-dropdown .list-group-item {
+  background-color: #343a40 !important;
+  color: #f8f9fa !important;
+  border: none;
+}
+.model-autocomplete-dropdown .list-group-item.active,
+.model-autocomplete-dropdown .list-group-item:active {
+  background-color: #0d6efd !important;
+  color: #fff !important;
+}
+.model-autocomplete-dropdown .list-group-item.disabled {
+  color: #adb5bd !important;
+  background-color: #343a40 !important;
+}
